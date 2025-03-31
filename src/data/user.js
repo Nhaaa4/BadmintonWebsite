@@ -1,3 +1,4 @@
+import cheaDara from "../assets/thouk.png"
 // User profiles data structure
 const userProfiles = [
     {
@@ -10,7 +11,7 @@ const userProfiles = [
       city: "New York",
       state: "NY",
       zip: "10001",
-      profileImage: "/placeholder.svg?height=96&width=96",
+      profileImage: cheaDara,
       memberSince: "2023-01-15",
       preferences: {
         notifications: true,

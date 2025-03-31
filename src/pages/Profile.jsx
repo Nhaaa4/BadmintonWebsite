@@ -16,13 +16,17 @@ import {
   getUserCoachingSessions,
   getUserRentals,
   getUserWishlist,
+  removeFromWishlist,
 } from "@/data/user"
 import thouk from "../assets/thouk.png"
+import { getProductById } from "@/data/products"
+import { useCart } from "@/context/CartContext"
 
 export default function Profile() {
   const navigator = useNavigate()
   const [searchParams] = useSearchParams()
   const { user, isAuthenticated, logout, updateProfile } = useAuth()
+  const { addToCart } = useCart()
   const [isClient, setIsClient] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
   const [userData, setUserData] = useState({
@@ -48,8 +52,9 @@ export default function Profile() {
   }, [])
 
   useEffect(() => {
-    // Check if user is logged in
-    if (!isAuthenticated && isClient) {
+    // Check if user is logged in (only after client-side rendering)
+    if (isClient && !isAuthenticated) {
+      // User is not authenticated, redirect to login
       toast({
         title: "Authentication Required",
         description: "Please log in to view your profile.",
@@ -61,6 +66,7 @@ export default function Profile() {
 
     // Load user data from auth context
     if (user) {
+      console.log("User data loaded:", user) // Debug log
       setUserData({
         name: user.name || "",
         email: user.email || "",
@@ -70,6 +76,7 @@ export default function Profile() {
         state: user.state || "",
         zip: user.zip || "",
       })
+
       // Load user data from database
       if (user.id) {
         const profile = getUserProfile(user.id)
@@ -103,8 +110,9 @@ export default function Profile() {
 
   const handleSaveProfile = (e) => {
     e.preventDefault()
-    
-    const success = updateProfile(userData) 
+
+    // Update profile in auth context
+    const success = updateProfile(userData)
 
     if (success) {
       toast({
@@ -130,15 +138,16 @@ export default function Profile() {
     return null // Prevent hydration errors
   }
 
+  // If not authenticated after client-side rendering, show loading or nothing
   if (!isAuthenticated) {
     return null
   }
 
-  const recentOrders = [
-    { id: "ORD-1234", date: "Mar 15, 2025", status: "Delivered", total: "$245.00", items: 3 },
-    { id: "ORD-9876", date: "Feb 28, 2025", status: "Processing", total: "$120.50", items: 2 },
-    { id: "ORD-5432", date: "Jan 10, 2025", status: "Delivered", total: "$78.00", items: 1 },
-  ]
+  // Format date for display
+  const formatDate = (dateString) => {
+    const options = { year: "numeric", month: "long", day: "numeric" }
+    return new Date(dateString).toLocaleDateString(undefined, options)
+  }
 
   return (
     <main className="min-h-screen bg-[#1e2535] py-12 px-4 sm:px-6">
@@ -159,7 +168,7 @@ export default function Profile() {
                     whileHover={{ scale: 1.05 }}
                   >
                     <img
-                      src={thouk}
+                      src={userProfile?.profileImage || "/placeholder.svg?height=96&width=96"}
                       alt="Profile"
                       width={96}
                       height={96}
@@ -239,6 +248,12 @@ export default function Profile() {
                   Orders
                 </TabsTrigger>
                 <TabsTrigger
+                  value="wishlist"
+                  className="data-[state=active]:bg-[#3b4d71] data-[state=active]:text-yellow-400"
+                >
+                  Wishlists
+                </TabsTrigger>
+                <TabsTrigger
                   value="bookings"
                   className="data-[state=active]:bg-[#3b4d71] data-[state=active]:text-yellow-400"
                 >
@@ -267,27 +282,27 @@ export default function Profile() {
                         whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(252, 211, 77, 0.1)" }}
                       >
                         <h3 className="text-yellow-400 font-medium mb-1">Orders</h3>
-                        <p className="text-2xl font-bold">3</p>
+                        <p className="text-2xl font-bold">{orders.length}</p>
                       </motion.div>
                       <motion.div
                         className="bg-[#1e2535] p-4 rounded-lg"
                         whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(252, 211, 77, 0.1)" }}
                       >
                         <h3 className="text-yellow-400 font-medium mb-1">Wishlist</h3>
-                        <p className="text-2xl font-bold">7</p>
+                        <p className="text-2xl font-bold">{wishlist.length}</p>
                       </motion.div>
                       <motion.div
                         className="bg-[#1e2535] p-4 rounded-lg"
                         whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(252, 211, 77, 0.1)" }}
                       >
                         <h3 className="text-yellow-400 font-medium mb-1">Court Bookings</h3>
-                        <p className="text-2xl font-bold">2</p>
+                        <p className="text-2xl font-bold">{bookings.length}</p>
                       </motion.div>
                     </div>
 
                     <h3 className="text-lg font-medium mb-3">Recent Orders</h3>
                     <div className="space-y-3">
-                      {recentOrders.map((order, index) => (
+                      {orders.slice(0, 3).map((order, index) => (
                         <motion.div
                           key={order.id}
                           className="bg-[#1e2535] p-3 rounded-lg flex justify-between items-center cursor-pointer hover:bg-[#283245] transition-colors"
@@ -300,11 +315,11 @@ export default function Profile() {
                           <div>
                             <p className="font-medium">{order.id}</p>
                             <p className="text-sm text-gray-400">
-                              {order.date} • {order.items} items
+                              {formatDate(order.date)} • {order.items.length} items
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-yellow-400">{order.total}</p>
+                            <p className="font-medium text-yellow-400">${order.total.toFixed(2)}</p>
                             <p className="text-sm text-gray-400">{order.status}</p>
                           </div>
                         </motion.div>
@@ -313,7 +328,7 @@ export default function Profile() {
 
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                       <button
-                        className="mt-4 hover:bg-[#4b5d81] text-white h-10 p-2 rounded-md border border-white"
+                        className="mt-4 bg-[#3b4d71] hover:bg-[#4b5d81] text-white h-10 p-2 rounded-md"
                         onClick={() => handleTabChange("orders")}
                       >
                         View All Orders
@@ -331,7 +346,7 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {recentOrders.map((order, index) => (
+                      {orders.map((order, index) => (
                         <motion.div
                           key={order.id}
                           className="bg-[#1e2535] p-4 rounded-lg"
@@ -352,78 +367,319 @@ export default function Profile() {
                               {order.status}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-400 mb-2">Placed on {order.date}</p>
-                          <div className="flex justify-between">
+                          <p className="text-sm text-gray-400 mb-2">Placed on {formatDate(order.date)}</p>
+
+                          <div className="space-y-2 mb-3">
+                            {order.items.map((item, idx) => (
+                              <div key={idx} className="flex justify-between text-sm">
+                                <span className="text-gray-300">
+                                  {item.name} <span className="text-gray-400">x{item.quantity}</span>
+                                </span>
+                                <span className="text-white">${(item.price * item.quantity).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex justify-between border-t border-gray-700 pt-2">
                             <p>
-                              Total: <span className="text-yellow-400">{order.total}</span>
+                              Total: <span className="text-yellow-400">${order.total.toFixed(2)}</span>
                             </p>
                             <button
                               variant="outline"
                               size="sm"
-                              className="border-gray-700 text-white hover:bg-[#3b4d71] hover:border hover:border-white h-8 p-1 rounded-md"
+                              className="border-gray-700 text-white hover:bg-[#3b4d71] h-10 p-2 rounded-md"
                             >
                               View Details
                             </button>
                           </div>
                         </motion.div>
                       ))}
+
+                      {orders.length === 0 && (
+                        <div className="text-center py-8 text-gray-400">
+                          <p>You haven't placed any orders yet.</p>
+                          <button
+                            className="mt-4 bg-yellow-400 hover:bg-yellow-500 text-black h-10 p-2 rounded-md"
+                            onClick={() => navigator("/product")}
+                          >
+                            Browse Products
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="bookings" className="mt-4">
+              <TabsContent value="wishlist" className="mt-4">
                 <Card className="bg-[#2c3b5a] border-gray-700 text-white">
                   <CardHeader>
-                    <CardTitle>Court Bookings</CardTitle>
+                    <CardTitle>My Wishlist</CardTitle>
                     <CardDescription className="text-gray-400">
-                      Manage your court reservations and coaching sessions.
+                      Items you've saved for later. Add them to your cart when you're ready to purchase.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <motion.div
-                        className="bg-[#1e2535] p-4 rounded-lg"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(252, 211, 77, 0.1)" }}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="font-medium">Court #3 Reservation</h3>
-                          <span className="px-2 py-1 rounded text-xs bg-green-900/30 text-green-400">Upcoming</span>
-                        </div>
-                        <p className="text-sm text-gray-400 mb-2">March 30, 2025 • 6:00 PM - 8:00 PM</p>
-                        <div className="flex justify-between">
-                          <p>Standard Package</p>
-                          <button variant="outline" size="sm" className="border-gray-700 text-white hover:bg-[#3b4d71] hover:border hover:border-white h-8 p-1 rounded-md"> 
-                            Reschedule
-                          </button>
-                        </div>
-                      </motion.div>
+                    {wishlist.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {wishlist.map((item, index) => {
+                          // Get product details from the product ID
+                          const product = getProductById(item.productId)
+                          if (!product) return null
 
-                      <motion.div
-                        className="bg-[#1e2535] p-4 rounded-lg"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(252, 211, 77, 0.1)" }}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="font-medium">Professional Coaching</h3>
-                          <span className="px-2 py-1 rounded text-xs bg-green-900/30 text-green-400">Upcoming</span>
-                        </div>
-                        <p className="text-sm text-gray-400 mb-2">April 2, 2025 • 5:30 PM - 6:30 PM</p>
-                        <div className="flex justify-between">
-                          <p>Coach: Alex Johnson</p>
-                          <button variant="outline" size="sm" className="border-gray-700 text-white hover:bg-[#3b4d71] hover:border hover:border-white h-8 p-1 rounded-md">
-                            Reschedule
-                          </button>
-                        </div>
-                      </motion.div>
+                          return (
+                            <motion.div
+                              key={item.productId}
+                              className="bg-[#1e2535] rounded-lg overflow-hidden"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              whileHover={{ y: -5 }}
+                            >
+                              <div className="relative h-40 w-full">
+                                <img
+                                  src={product.image || "/placeholder.svg"}
+                                  alt={product.name}
+                                  fill
+                                  className="object-contain p-4"
+                                />
+                              </div>
+                              <div className="p-4">
+                                <h3 className="font-medium text-white mb-1">{product.name}</h3>
+                                <p className="text-sm text-gray-400 mb-2 line-clamp-2">{product.description}</p>
+                                <div className="flex justify-between items-center mb-3">
+                                  <div className="text-yellow-400 font-bold">${product.price.toFixed(2)}</div>
+                                  <div className="text-xs text-gray-400">Added on {formatDate(item.dateAdded)}</div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 border-gray-700 text-white hover:bg-[#3b4d71] h-10 p-2 rounded-md"
+                                    onClick={() => {
+                                      // Remove from wishlist
+                                      removeFromWishlist(user.id, item.productId)
+                                      // Update local state
+                                      setWishlist(wishlist.filter((i) => i.productId !== item.productId))
+                                      toast({
+                                        title: "Removed from wishlist",
+                                        description: `${product.name} has been removed from your wishlist.`,
+                                      })
+                                    }}
+                                  >
+                                    Remove
+                                  </button>
+                                  <button
+                                    size="sm"
+                                    className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-black h-10 p-2 rounded-md"
+                                    onClick={() => {
+                                      // Add to cart
+                                      addToCart(product)
+                                      toast({
+                                        title: "Added to cart",
+                                        description: `${product.name} has been added to your cart.`,
+                                      })
+                                    }}
+                                  >
+                                    Add to Cart
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-400">
+                        <p>Your wishlist is empty.</p>
+                        <button
+                          className="mt-4 bg-yellow-400 hover:bg-yellow-500 text-black h-10 p-2 rounded-md"
+                          onClick={() => navigator("/product")}
+                        >
+                          Browse Products
+                        </button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              
 
-                      <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} >
-                        <button className=" bg-yellow-400 hover:bg-yellow-500 text-black h-10 p-2 rounded-md">
+              <TabsContent value="bookings" className="mt-4">
+                <Card className="bg-[#2c3b5a] border-gray-700 text-white">
+                  <CardHeader>
+                    <CardTitle>Court Bookings & Services</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Manage your court reservations, coaching sessions, and equipment rentals.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Court Bookings */}
+                      <div>
+                        <h3 className="text-lg font-medium text-yellow-400 mb-3">Court Bookings</h3>
+                        <div className="space-y-4">
+                          {bookings.map((booking, index) => (
+                            <motion.div
+                              key={booking.id}
+                              className="bg-[#1e2535] p-4 rounded-lg"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(252, 211, 77, 0.1)" }}
+                            >
+                              <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-medium">{booking.courtId} Reservation</h3>
+                                <span
+                                  className={`px-2 py-1 rounded text-xs ${
+                                    booking.status === "Upcoming"
+                                      ? "bg-green-900/30 text-green-400"
+                                      : "bg-gray-900/30 text-gray-400"
+                                  }`}
+                                >
+                                  {booking.status}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-400 mb-2">
+                                {formatDate(booking.date)} • {booking.startTime} - {booking.endTime}
+                              </p>
+                              <div className="flex justify-between">
+                                <p>{booking.package} Package</p>
+                                <button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-gray-700 text-white hover:bg-[#3b4d71] rounded-md h-10 p-2"
+                                  disabled={booking.status !== "Upcoming"}
+                                >
+                                  {booking.status === "Upcoming" ? "Reschedule" : "View Details"}
+                                </button>
+                              </div>
+                            </motion.div>
+                          ))}
+
+                          {bookings.length === 0 && (
+                            <div className="text-center py-4 text-gray-400">
+                              <p>No court bookings found.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Coaching Sessions */}
+                      <div>
+                        <h3 className="text-lg font-medium text-yellow-400 mb-3">Coaching Sessions</h3>
+                        <div className="space-y-4">
+                          {coachingSessions.map((session, index) => (
+                            <motion.div
+                              key={session.id}
+                              className="bg-[#1e2535] p-4 rounded-lg"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(252, 211, 77, 0.1)" }}
+                            >
+                              <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-medium">Professional Coaching</h3>
+                                <span
+                                  className={`px-2 py-1 rounded text-xs ${
+                                    session.status === "Upcoming"
+                                      ? "bg-green-900/30 text-green-400"
+                                      : "bg-gray-900/30 text-gray-400"
+                                  }`}
+                                >
+                                  {session.status}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-400 mb-2">
+                                {formatDate(session.date)} • {session.startTime} - {session.endTime}
+                              </p>
+                              <div className="flex justify-between">
+                                <p>Coach: {session.coachId}</p>
+                                <button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-gray-700 text-white hover:bg-[#3b4d71] rounded-md h-10 p-2"
+                                  disabled={session.status !== "Upcoming"}
+                                >
+                                  {session.status === "Upcoming" ? "Reschedule" : "View Details"}
+                                </button>
+                              </div>
+                            </motion.div>
+                          ))}
+
+                          {coachingSessions.length === 0 && (
+                            <div className="text-center py-4 text-gray-400">
+                              <p>No coaching sessions found.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Equipment Rentals */}
+                      <div>
+                        <h3 className="text-lg font-medium text-yellow-400 mb-3">Equipment Rentals</h3>
+                        <div className="space-y-4">
+                          {rentals.map((rental, index) => (
+                            <motion.div
+                              key={rental.id}
+                              className="bg-[#1e2535] p-4 rounded-lg"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(252, 211, 77, 0.1)" }}
+                            >
+                              <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-medium">Equipment Rental</h3>
+                                <span
+                                  className={`px-2 py-1 rounded text-xs ${
+                                    rental.status === "Upcoming"
+                                      ? "bg-green-900/30 text-green-400"
+                                      : "bg-gray-900/30 text-gray-400"
+                                  }`}
+                                >
+                                  {rental.status}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-400 mb-2">{formatDate(rental.date)}</p>
+                              <div className="space-y-1 mb-3">
+                                {rental.items.map((item, idx) => (
+                                  <div key={idx} className="flex justify-between text-sm">
+                                    <span className="text-gray-300">
+                                      {item.name} <span className="text-gray-400">x{item.quantity}</span>
+                                    </span>
+                                    <span className="text-white">${(item.price * item.quantity).toFixed(2)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex justify-between border-t border-gray-700 pt-2">
+                                <p>
+                                  Total: <span className="text-yellow-400">${rental.total.toFixed(2)}</span>
+                                </p>
+                                <button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-gray-700 text-white hover:bg-[#3b4d71] h-10 rounded-md p-2"
+                                >
+                                  View Details
+                                </button>
+                              </div>
+                            </motion.div>
+                          ))}
+
+                          {rentals.length === 0 && (
+                            <div className="text-center py-4 text-gray-400">
+                              <p>No equipment rentals found.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                        <button
+                          className="w-full bg-yellow-400 hover:bg-yellow-500 text-black h-10 rounded-md"
+                          onClick={() => navigator("/services")}
+                        >
                           Book New Session
                         </button>
                       </motion.div>
