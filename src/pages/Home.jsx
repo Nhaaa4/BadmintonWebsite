@@ -6,54 +6,11 @@ import { motion } from "framer-motion";
 import badmintonHero from "../assets/hero-badminton.jpg";
 import badmintonCourt from "../assets/badminton-court.jpg";
 import badmintonRacket from "../assets/badminton-racket.png";
+import { bestsellerProducts } from "@/data/products";
 
 export default function Home() {
   const navigate = useNavigate();
   const { addToCart } = useCart();
-
-  // Featured products for the bestseller section
-  const bestsellerProducts = [
-    {
-      id: 1,
-      name: "Name Racket",
-      description:
-        "A racket designed for speed and control. Lightweight, durable, and perfect for quick plays.",
-      price: 200.0,
-      originalPrice: 300.0,
-      rating: "4.8/5 (120)",
-      image: badmintonRacket,
-    },
-    {
-      id: 2,
-      name: "Pro Racket X1",
-      description:
-        "Professional grade racket with carbon fiber frame. Exceptional power and precision for competitive play.",
-      price: 250.0,
-      originalPrice: 350.0,
-      rating: "4.9/5 (98)",
-      image: badmintonRacket,
-    },
-    {
-      id: 3,
-      name: "Speed Shuttle",
-      description:
-        "Tournament grade shuttlecocks with excellent flight stability. Pack of 12.",
-      price: 30.0,
-      originalPrice: 45.0,
-      rating: "4.7/5 (203)",
-      image: badmintonRacket,
-    },
-    {
-      id: 4,
-      name: "Grip Master Tape",
-      description:
-        "Premium grip tape for maximum comfort and sweat absorption. Pack of 3.",
-      price: 15.0,
-      originalPrice: 22.0,
-      rating: "4.6/5 (155)",
-      image: badmintonRacket,
-    },
-  ];
 
   // Blog posts
   const blogPosts = [
