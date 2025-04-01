@@ -1,4 +1,5 @@
 import cheaDara from "../assets/thouk.png"
+import panha from "../assets/panha.png"
 // User profiles data structure
 const userProfiles = [
     {
@@ -22,14 +23,14 @@ const userProfiles = [
     {
       id: 2,
       userId: 2, // References the account ID in dataAccount.js
-      name: "Admin User",
-      email: "admin@fairplay.com",
-      phone: "+1 (555) 987-6543",
-      address: "456 Admin Avenue",
-      city: "San Francisco",
-      state: "CA",
+      name: "Panha Sovan",
+      email: "panhasovan51@gmail.com",
+      phone: "(+885) 972-716-722",
+      address: "National Road 1",
+      city: "Phnom Penh",
+      state: "PP",
       zip: "94105",
-      profileImage: "/placeholder.svg?height=96&width=96",
+      profileImage: panha,
       memberSince: "2022-11-05",
       preferences: {
         notifications: true,

@@ -1,7 +1,6 @@
 import React from "react";
 import { Award, MapPin, Users, Clock } from "lucide-react";
 import banner from "../assets/banner.jpg"
-import ahThouk from "../assets/thouk.png";
 import mengeang from "../assets/mengeang.png";
 import panha from "../assets/panha.png";
 import chealean from "../assets/chealean.png";
@@ -52,13 +51,6 @@ export default function About() {
       role: "Youth Program Director",
       bio: "Specialized in developing young talent through structured training programs.",
       image: panha,
-    },
-    {
-      id: 4,
-      name: "Ah Thouk",
-      role: "Fitness Specialist",
-      bio: "Certified trainer focused on badminton-specific conditioning and injury prevention.",
-      image: ahThouk,
     },
   ];
 
@@ -118,10 +110,10 @@ export default function About() {
 
           {/* Our Team Section */}
           <h2 className="text-3xl font-bold text-yellow-400 mb-8">Our Team</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {team.map((member) => (
               <div key={member.id} className="bg-[#2c3b5a] rounded-lg overflow-hidden">
-                <div className="relative h-48 w-full">
+                <div className="relative h-64 w-full">
                   <img
                     src={member.image || "/placeholder.svg"}
                     alt={member.name}

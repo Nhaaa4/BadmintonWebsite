@@ -12,10 +12,10 @@ const accounts = [
     },
     {
       id: 2,
-      name: "Admin User",
-      email: "admin@fairplay.com",
-      password: "admin123", // In a real app, this would be hashed
-      role: "admin",
+      name: "Panha Sovan",
+      email: "panhasovan51@gmail.com",
+      password: "12345678", // In a real app, this would be hashed
+      role: "user",
       isActive: true,
       lastLogin: "2025-03-28T14:20:15Z",
       createdAt: "2022-11-05T09:45:00Z",
