@@ -113,7 +113,7 @@ export default function About() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {team.map((member) => (
               <div key={member.id} className="bg-[#2c3b5a] rounded-lg overflow-hidden">
-                <div className="relative h-64 w-full flex">
+                <div className="relative h-64 w-full flex justify-center items-center">
                   <img
                     src={member.image || "/placeholder.svg"}
                     alt={member.name}

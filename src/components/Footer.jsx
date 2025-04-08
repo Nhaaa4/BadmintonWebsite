@@ -80,11 +80,6 @@ export default function Footer() {
                   Blog
                 </Link>
               </li>
-              <li>
-                <Link to="#" className="text-[#1e2535] hover:text-white transition-colors">
-                  Contact
-                </Link>
-              </li>
             </ul>
           </div>
 
