@@ -20,6 +20,7 @@ import {
 } from "@/data/user"
 import { getProductById } from "@/data/products"
 import { useCart } from "@/context/CartContext"
+import profile from "../assets/profile.jpg"
 
 export default function Profile() {
   const navigator = useNavigate()
@@ -167,7 +168,7 @@ export default function Profile() {
                     whileHover={{ scale: 1.05 }}
                   >
                     <img
-                      src={userProfile?.profileImage || "/placeholder.svg?height=96&width=96"}
+                      src={userProfile?.profileImage || profile}
                       alt="Profile"
                       width={96}
                       height={96}
