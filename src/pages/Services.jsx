@@ -411,7 +411,7 @@ export default function Services() {
                     Coach
                   </label>
                   <Select>
-                    <SelectTrigger className="col-span-3 bg-[#1e2535] border-gray-700 focus:ring-yellow-400 text-white">
+                    <SelectTrigger id="coach" className="col-span-3 bg-[#1e2535] border-gray-700 focus:ring-yellow-400 text-white">
                       <SelectValue placeholder="Select a coach" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#2c3b5a] border-gray-700 text-white">

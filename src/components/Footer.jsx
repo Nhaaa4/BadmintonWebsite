@@ -3,16 +3,25 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebook, faInstagram, faTiktok, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import { Link } from "react-router-dom";
+import { toast } from "./ui/use-toast";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
 
   const handleSubscribe = () => {
     if (email) {
-      alert(`Subscribed successfully with email: ${email}`);
+      toast({
+        title: "Subscribed Successful",
+        description: `Subscribed successfully with email: ${email}`,
+        variant: "success",
+      })
       setEmail(""); // Clear the input field after subscribing
     } else {
-      alert("Please enter a valid email address.");
+      toast({
+        title: "Subscribed Failed",
+        description: "Please enter a valid email address. Try again.",
+        variant: "destructive",
+      })
     }
   };
 
