@@ -435,12 +435,12 @@ export default function Profile() {
                               transition={{ delay: index * 0.1 }}
                               whileHover={{ y: -5 }}
                             >
-                              <div className="relative h-40 w-full">
+                              <div className="relative h-50 w-full flex justify-center items-center">
                                 <img
                                   src={product.image || "/placeholder.svg"}
                                   alt={product.name}
                                   fill
-                                  className="object-contain p-4"
+                                  className="object-contain p-4 h-full"
                                 />
                               </div>
                               <div className="p-4">
